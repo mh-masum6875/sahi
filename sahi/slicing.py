@@ -670,9 +670,9 @@ def get_auto_slice_params(height: int, width: int) -> tuple[int, int, int, int]:
 
     Factor is the power value of 2 closest to the image resolution:
         - factor <= 18: low resolution image such as 300x300, 640x640
-        - 18 < factor <= 21: medium resolution image such as 1024x1024, 1336x960
-        - 21 < factor <= 24: high resolution image such as 2048x2048, 2048x4096, 4096x4096
-        - factor > 24: ultra-high resolution image such as 6380x6380, 4096x8192.
+        - 18 < factor < 21: medium resolution image such as 1024x1024, 1336x960
+        - 21 <= factor < 24: high resolution image such as 2048x2048, 2048x4096, 4096x4096
+        - factor >= 24: ultra-high resolution image such as 6380x6380, 4096x8192.
 
     Args:
         height: image height.
