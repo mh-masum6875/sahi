@@ -724,6 +724,36 @@ def test_video_prediction_reads_source_as_video(tmp_path: Path, file_name: str) 
     assert result is not None
 
 
+def test_folder_prediction_skips_files_that_only_contain_an_image_extension(tmp_path: Path) -> None:
+    """Test that a sidecar file such as image.jpeg.aux.xml is not read as an image."""
+    # init model
+    download_yolo26n_model()
+
+    # prepare a folder with one image and the sidecar file GDAL writes next to it
+    source = tmp_path / "images"
+    source.mkdir()
+    shutil.copy("tests/data/small-vehicles1.jpeg", source / "tile.jpeg")
+    (source / "tile.jpeg.aux.xml").write_text("<PAMDataset></PAMDataset>")
+
+    result = predict(
+        model_type="ultralytics",
+        model_path=UltralyticsConstants.YOLO26N_MODEL_PATH,
+        model_confidence_threshold=CONFIDENCE_THRESHOLD,
+        model_device=MODEL_DEVICE,
+        source=str(source),
+        no_sliced_prediction=True,
+        image_size=IMAGE_SIZE,
+        novisual=True,
+        export_pickle=True,
+        project=str(tmp_path / "predict_result"),
+        return_dict=True,
+        verbose=0,
+    )
+
+    assert result is not None
+    assert [pickle_path.name for pickle_path in (result["export_dir"] / "pickles").iterdir()] == ["tile.pickle"]
+
+
 def test_source_image_is_decoded_once_per_sliced_prediction(monkeypatch: pytest.MonkeyPatch) -> None:
     """A sliced run decodes the source file once, not once per result it builds.
 

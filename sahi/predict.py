@@ -672,7 +672,12 @@ def predict(
         image_iterator = [str(Path(source) / Path(coco_image.file_name)) for coco_image in coco.images]
         coco_json = []
     elif source and os.path.isdir(source):
-        image_iterator = list_files(directory=source, contains=IMAGE_EXTENSIONS, verbose=verbose)
+        # list_files matches anywhere in the file name, keep only the files that end with an image extension
+        image_iterator = [
+            image_path
+            for image_path in list_files(directory=source, contains=IMAGE_EXTENSIONS, verbose=verbose)
+            if Path(image_path).suffix.lower() in IMAGE_EXTENSIONS
+        ]
     elif source and Path(source).suffix.lower() in VIDEO_EXTENSIONS:
         source_is_video = True
         read_video_frame, output_video_writer, video_file_name, num_frames = get_video_reader(
