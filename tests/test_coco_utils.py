@@ -838,6 +838,30 @@ class TestCocoUtils:
         assert coco_with_clipped_bboxes.images[1] is not None
         assert len(coco_with_clipped_bboxes.images[1].annotations) == 0
 
+    def test_bbox_clipping_skips_annotations_with_nothing_inside(self) -> None:
+        """Test that clipping drops zero-area boxes and polygons that lie outside the image."""
+        from sahi.utils.coco import Coco
+
+        coco_dict = {
+            "images": [{"id": 1, "file_name": "a.jpg", "height": 100, "width": 100}],
+            "categories": [{"id": 1, "name": "person"}],
+            "annotations": [
+                {"id": 1, "image_id": 1, "category_id": 1, "bbox": [10, 10, 20, 20], "segmentation": []},
+                {"id": 2, "image_id": 1, "category_id": 1, "bbox": [40, 40, 0, 20], "segmentation": []},
+                {
+                    "id": 3,
+                    "image_id": 1,
+                    "category_id": 1,
+                    "bbox": [90, 60, 80, 80],
+                    "segmentation": [[170, 60, 170, 140, 90, 140]],
+                },
+            ],
+        }
+
+        clipped_coco = Coco.from_coco_dict_or_path(coco_dict, clip_bboxes_to_img_dims=True)
+
+        assert [annotation.bbox for annotation in clipped_coco.images[0].annotations] == [[10, 10, 20, 20]]
+
     def test_derived_coco_keeps_remapped_categories(self) -> None:
         """Test that derived Coco objects do not apply remapping_dict to already remapped categories."""
         from sahi.utils.coco import Coco

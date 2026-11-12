@@ -1552,8 +1552,6 @@ class Coco:
 
     def get_coco_with_clipped_bboxes(self) -> "Coco":
         """Limits overflowing bounding boxes to image dimensions."""
-        from sahi.slicing import annotation_inside_slice
-
         coco = self._copy_without_images()
 
         for coco_img in self.images:
@@ -1562,20 +1560,19 @@ class Coco:
                 file_name=coco_img.file_name, height=coco_img.height, width=coco_img.width, id=coco_img.id
             )
             for coco_ann in coco_img.annotations:
-                if annotation_inside_slice(annotation={"bbox": coco_ann.bbox}, slice_bbox=img_dims):
-                    shapely_ann = coco_ann.get_sliced_coco_annotation(img_dims)
-                    bbox = ShapelyAnnotation.to_xywh(shapely_ann._shapely_annotation)
-                    coco_ann_from_shapely = CocoAnnotation(
-                        segmentation=shapely_ann.segmentation if coco_ann.segmentation else None,
-                        bbox=[int(x) for x in bbox],  # type: ignore[list-item]
-                        category_id=coco_ann.category_id,
-                        category_name=coco_ann.category_name,
-                        image_id=coco_ann.image_id,
-                        iscrowd=coco_ann.iscrowd,
-                    )
-                    coco_image.add_annotation(coco_ann_from_shapely)
-                else:
+                shapely_ann = coco_ann.get_sliced_coco_annotation(img_dims)
+                bbox = ShapelyAnnotation.to_xywh(shapely_ann._shapely_annotation)
+                if not bbox:  # nothing of the annotation is inside the image
                     continue
+                coco_ann_from_shapely = CocoAnnotation(
+                    segmentation=shapely_ann.segmentation if coco_ann.segmentation else None,
+                    bbox=[int(x) for x in bbox],  # type: ignore[list-item]
+                    category_id=coco_ann.category_id,
+                    category_name=coco_ann.category_name,
+                    image_id=coco_ann.image_id,
+                    iscrowd=coco_ann.iscrowd,
+                )
+                coco_image.add_annotation(coco_ann_from_shapely)
             coco.add_image(coco_image)
         return coco
 
